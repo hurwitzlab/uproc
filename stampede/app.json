@@ -1,0 +1,69 @@
+{"available":true,
+ "checkpointable":false,
+ "defaultMemoryPerNode":32,
+ "defaultProcessorsPerNode":16,
+ "defaultMaxRunTime":"12:00:00",
+ "defaultNodeCount":1,
+ "defaultQueue":"serial",
+ "deploymentPath":"kyclark/applications/uproc-0.0.1/stampede",
+ "deploymentSystem":"data.iplantcollaborative.org",
+ "executionSystem":"tacc-stampede-kyclark",
+ "executionType":"HPC",
+ "helpURI":"",
+ "label": "UProC",
+ "longDescription":"protein sequence classification",
+ "modules":["singularity"],
+ "name":"uproc",
+ "ontology":["http://sswapmeet.sswap.info/agave/apps/Application"],
+ "parallelism":"SERIAL",
+ "shortDescription":"protein sequence classification",
+ "tags":["protein"],
+ "templatePath":"template.sh",
+ "testPath":"test.sh",
+ "version":"0.0.1",
+ "inputs":[
+    {"id":"IN_DIR",
+     "value":
+        {"default":"",
+         "order":0,
+         "required":false,
+         "validator":"",
+         "visible":true},
+     "semantics":
+        {"ontology":["http://sswapmeet.sswap.info/mime/application/X-bam"],
+         "minCardinality":1,
+         "maxCardinality":-1,
+         "fileTypes":["raw-0"]},
+     "details":
+        {"description":"",
+         "label":"Directory of input files",
+         "argument":"-i ",
+         "repeatArgument":true,
+         "showArgument":true}
+    }
+  ],
+  "parameters": [
+     {
+      "id": "SEQ_TYPE",
+      "value": {
+          "type": "enumeration",
+          "default": "dna",
+          "order": 1,
+          "required": false,
+          "enumValues": [
+            { "dna": "DNA" },
+            { "prot" : "Protein" },
+            { "orf": "ORF" }
+          ],
+          "visible": true
+      },
+      "details": {
+          "description": "Sequence type",
+          "label": "Sequence type",
+          "argument": "-t ",
+          "showArgument": true
+      }
+    }
+  ],
+  "outputs":[]
+}
