@@ -4,8 +4,16 @@ IN_DIR=""
 OUT_DIR="$PWD/uproc-out"
 SEQ_TYPE="dna"
 IMG="uproc-1.2.0.img"
-UPROC_DB_DIR="/work/05066/imicrobe/iplantc.org/data/uproc/dbs"
+UPROC_DB_DIR="/work/05066/imicrobe/iplantc.org/data/uproc/db"
 UPROC_MODEL_DIR="/work/05066/imicrobe/iplantc.org/data/uproc/model"
+PTHRESH=3
+OTHRESH=2
+LONG=0
+SHORT=0
+NUMERIC=0
+PREDS=0
+STATS=0
+COUNTS=0
 
 function lc() {
   wc -l "$1" | cut -d ' ' -f 1
@@ -18,6 +26,17 @@ function HELP() {
   echo " -i iN_DIR (input directory)"
   echo ""
   echo "Optional arguments:"
+  echo " -c COUNTS ($COUNTS)"
+  echo " -d UPROC_DB_DIR ($UPROC_DB_DIR)"
+  echo " -f STATS ($STATS)"
+  echo " -l LONG ($LONG)"
+  echo " -m UPROC_MODEL_DIR ($UPROC_MODEL_DIR)"
+  echo " -n NUMERIC ($NUMERIC)"
+  echo " -o OUT_DIR ($OUT_DIR)"
+  echo " -O OTHRESH ($OTHRESH)"
+  echo " -p PREDS ($PREDS)"
+  echo " -P PTHRESH ($PTHRESH)"
+  echo " -s SHORT ($SHORT)"
   echo " -t SEQ_TYPE ($SEQ_TYPE)"
   exit 0
 }
@@ -26,16 +45,46 @@ if [[ $# -eq 0 ]]; then
   HELP
 fi
 
-while getopts :i:o:t:h OPT; do
+while getopts :d:i:m:o:O:P:t:cfhlnps OPT; do
   case $OPT in
+    c)
+      COUNTS="1"
+      ;;
+    d)
+      UPROC_DB_DIR="$OPTARG"
+      ;;
+    f)
+      STATS="1"
+      ;;
     i)
       IN_DIR="$OPTARG"
       ;;
     h)
       HELP
       ;;
+    l)
+      LONG="1"
+      ;;
+    m)
+      UPROC_MODEL_DIR="$OPTARG"
+      ;;
+    n)
+      NUMERIC="1"
+      ;;
     o)
       OUT_DIR="$OPTARG"
+      ;;
+    O)
+      OTHRESH="$OPTARG"
+      ;;
+    p)
+      PREDS="1"
+      ;;
+    P)
+      PTHRESH="$OPTARG"
+      ;;
+    s)
+      SHORT="1"
       ;;
     t)
       SEQ_TYPE="$OPTARG"
@@ -58,11 +107,11 @@ fi
 [[ ! -d "$OUT_DIR" ]] && mkdir -p "$OUT_DIR"
 
 PROG=""
-if [[ $SEQ_TYPE != "dna" ]]; then
+if [[ $SEQ_TYPE == "dna" ]]; then
     PROG="uproc-dna"
-else if [[ $SEQ_TYPE != "prot" ]]; then
+elif [[ $SEQ_TYPE == "prot" ]]; then
     PROG="uproc-prot"
-else if[[ $SEQ_TYPE != "orf" ]]; then
+elif [[ $SEQ_TYPE == "orf" ]]; then
     PROG="uproc-orf"
 else
     echo "SEQ_TYPE \"$SEQ_TYPE\" must be dna, prot, or orf."
@@ -70,7 +119,7 @@ else
 fi
 
 FILES=$(mktemp)
-find "$IN_DIR" -type > "$FILES"
+find "$IN_DIR" -type f > "$FILES"
 NUM_FILES=$(lc "$FILES")
 
 if [[ $NUM_FILES -lt 1 ]]; then
@@ -78,10 +127,45 @@ if [[ $NUM_FILES -lt 1 ]]; then
     exit 1
 fi
 
+echo "Will process NUM_FILES \"$NUM_FILES\""
+
+OPTS="-P $PTHRESH -O $OTHRESH"
+[[ $LONG -gt 0 ]]    && OPTS="$OPTS --long"
+[[ $SHORT -gt 0 ]]   && OPTS="$OPTS --short"
+[[ $NUMERIC -gt 0 ]] && OPTS="$OPTS --numeric"
+[[ $STATS -gt 0 ]]   && OPTS="$OPTS --stats"
+[[ $PREDS -gt 0 ]]   && OPTS="$OPTS --preds"
+[[ $COUNTS -gt 0 ]]  && OPTS="$OPTS --counts"
+
+PARAM="$$.param"
+cat /dev/null > "$PARAM"
+
 i=0
 while read -r FILE; do
     BASENAME=$(basename "$FILE")
     let i++
     printf "%3d: %s\n" $i "$BASENAME"
-    singularity exec $IMG $PROG -o $OUT_DIR/$BASENAME $UPROC_DB_DIR $UPROG_MODEL_DIR $FILE
+    echo "singularity exec $IMG $PROG -o $OUT_DIR/$BASENAME $OPTS $UPROC_DB_DIR $UPROC_MODEL_DIR $FILE" >> "$PARAM"
+    break
 done < "$FILES"
+
+NJOBS=$(lc "$PARAM")
+
+if [[ $NJOBS -lt 1 ]]; then
+    echo 'No launcher jobs to run!'
+else
+    export LAUNCHER_DIR="$HOME/src/launcher"
+    export LAUNCHER_PLUGIN_DIR="$LAUNCHER_DIR/plugins"
+    export LAUNCHER_WORKDIR="$PWD"
+    export LAUNCHER_RMI="SLURM"
+    export LAUNCHER_SCHED="interleaved"
+    export LAUNCHER_JOB_FILE="$PARAM"
+    [[ $NJOBS -gt 4  ]] && export LAUNCHER_PPN=4
+    [[ $NJOBS -gt 16 ]] && export LAUNCHER_PPN=16
+    echo "Started LAUNCHER $(date)"
+    "$LAUNCHER_DIR/paramrun"
+    echo "Ended LAUNCHER $(date)"
+fi
+
+echo "Done."
+echo "Comments to kyclark@email.arizona.edu"
