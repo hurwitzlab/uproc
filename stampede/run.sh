@@ -1,10 +1,17 @@
 #!/bin/bash
 
+#SBATCH -J uproc
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -p normal
+#SBATCH -t 24:00:00
+#SBATCH -A iPlant-Collabs
+
 IN_DIR=""
 OUT_DIR="$PWD/uproc-out"
 SEQ_TYPE="dna"
 IMG="uproc-1.2.0.img"
-UPROC_DB_DIR="/work/05066/imicrobe/iplantc.org/data/uproc/db"
+UPROC_DB_DIR="/work/05066/imicrobe/iplantc.org/data/uproc/dbnew"
 UPROC_MODEL_DIR="/work/05066/imicrobe/iplantc.org/data/uproc/model"
 PTHRESH=3
 OTHRESH=2
