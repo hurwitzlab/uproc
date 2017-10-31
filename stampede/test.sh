@@ -12,7 +12,9 @@
 set -u
 
 #IN_DIR="$WORK/data/pov/orfs"
-IN_DIR="$WORK/data/pov/fasta"
-OUT_DIR="$SCRATCH/uproc-out/mouse-dna"
+#IN_DIR="$WORK/data/pov/fasta"
+#OUT_DIR="$SCRATCH/uproc-out/mouse-dna"
+#./run.sh -i "$IN_DIR" -o "$OUT_DIR" -s -n -c
 
-./run.sh -i "$IN_DIR" -o "$OUT_DIR" -s -n -c
+./run.sh -q /work/05066/imicrobe/iplantc.org/data/imicrobe/projects/1/samples/1/JGI_AMD_5WAY_IRNMTN_SMPL_20020301.fa -o $SCRATCH/uproc-out
+
