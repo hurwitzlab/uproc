@@ -123,7 +123,8 @@ done
 INPUT_FILES=$(mktemp)
 if [[ -n "$IN_DIR" ]]; then
     if [[ -d "$IN_DIR" ]]; then
-        find "$IN_DIR" -type f > "$INPUT_FILES"
+        #find "$IN_DIR" -type f > "$INPUT_FILES"
+        find "$IN_DIR" -type f \( -name \*.fa -o -name \*.fna -o -name \*.fasta \) > "$INPUT_FILES"
     else
         echo "IN_DIR \"$IN_DIR\" is not a directory"
         exit 1
@@ -190,10 +191,13 @@ while read -r FILE; do
     #OUT_FILE=$(echo "$FILE" | perl -pe "s{$IN_DIR}{$OUT_DIR}")
     #BASEDIR=$(dirname "$OUT_FILE")
     #[[ ! -d "$BASEDIR" ]] && mkdir -p "$BASEDIR"
+    FILE_DIR=$(dirname "$FILE")
 
     while read -r DB_DIR; do
         DB_TYPE=$(basename "$DB_DIR") # e.g., kegg or pfam28
-        OUT_FILE="$OUT_DIR/$DB_TYPE-$BASENAME"
+        #OUT_FILE="$OUT_DIR/$DB_TYPE-$BASENAME"
+        OUT_FILE="$FILE_DIR/$BASENAME.uproc.$DB_TYPE"
+
         echo "singularity exec $IMG $PROG -o $OUT_FILE $OPTS $DB_DIR $UPROC_MODEL_DIR $FILE" >> "$PARAM"
     done < "$UPROC_DB_DIRS"
 done < "$INPUT_FILES"
@@ -204,9 +208,8 @@ if [[ $NJOBS -lt 1 ]]; then
     echo 'No launcher jobs to run!'
 else
     export LAUNCHER_JOB_FILE="$PARAM"
-    [[ $NJOBS -ge 4  ]] && export LAUNCHER_PPN=4
     [[ $NJOBS -ge 16 ]] && export LAUNCHER_PPN=16
-    echo "Started LAUNCHER $(date)"
+    echo "Starting NJOBS \"$NJOBS\" $(date)"
     "$LAUNCHER_DIR/paramrun"
     echo "Ended LAUNCHER $(date)"
 fi
