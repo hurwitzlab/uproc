@@ -1,0 +1,13 @@
+{
+  "name": "uproc test-1509475046",
+  "appId": "uproc-1.2.0",
+  "archive": true,
+  "inputs": {
+    "QUERY": [
+      "/kyclark/data/dolphin/fasta/Dolphin_1_z04.fa",
+      "/kyclark/data/dolphin/fasta/Dolphin_2_z09.fa"
+    ]
+  },
+  "parameter": {
+  }
+}
