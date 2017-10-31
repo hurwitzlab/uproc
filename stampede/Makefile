@@ -1,11 +1,11 @@
-APP = mash-0.0.5
+APP = uproc-1.2.0
 EMAIL = kyclark@email.arizona.edu
 
 clean:
 	find . \( -name \*.out -o -name \*.param \) -exec rm {} \;
 
 up: 
-	copy-from-manifest.pl6 $(WORK)/$(APP)
+	copy_from_manifest.py
 
 template:
 	jobs-template $(APP) > job.json

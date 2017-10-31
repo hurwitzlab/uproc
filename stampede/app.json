@@ -5,7 +5,7 @@
  "defaultMaxRunTime":"12:00:00",
  "defaultNodeCount":1,
  "defaultQueue":"serial",
- "deploymentPath":"kyclark/applications/uproc-0.0.1/stampede",
+ "deploymentPath":"kyclark/applications/uproc-1.2.0/stampede",
  "deploymentSystem":"data.iplantcollaborative.org",
  "executionSystem":"tacc-stampede-kyclark",
  "executionType":"HPC",
@@ -20,9 +20,9 @@
  "tags":["protein"],
  "templatePath":"template.sh",
  "testPath":"test.sh",
- "version":"0.0.1",
+ "version":"1.2.0",
  "inputs":[
-    {"id":"IN_DIR",
+    {"id":"QUERY",
      "value":
         {"default":"",
          "order":0,
@@ -36,8 +36,8 @@
          "fileTypes":["raw-0"]},
      "details":
         {"description":"",
-         "label":"Directory of input files",
-         "argument":"-i ",
+         "label":"Input directories/files",
+         "argument":"-q ",
          "repeatArgument":true,
          "showArgument":true}
     }
@@ -62,6 +62,142 @@
           "label": "Sequence type",
           "argument": "-t ",
           "showArgument": true
+      },
+      {
+        "id": "COUNTS",
+        "value": {
+            "type": "string",
+            "default": "0",
+            "order": 1,
+            "required": false,
+            "validator": "",
+            "visible": true
+        },
+        "details": {
+            "description": "Counts",
+            "label": "Counts",
+            "argument": "-c ",
+            "showArgument": true
+        }
+      },
+      {
+        "id": "STATS",
+        "value": {
+            "type": "string",
+            "default": "0",
+            "order": 1,
+            "required": false,
+            "validator": "",
+            "visible": true
+        },
+        "details": {
+            "description": "Stats",
+            "label": "Stats",
+            "argument": "-f ",
+            "showArgument": true
+        }
+      },
+      {
+        "id": "LONG",
+        "value": {
+            "type": "string",
+            "default": "0",
+            "order": 1,
+            "required": false,
+            "validator": "",
+            "visible": true
+        },
+        "details": {
+            "description": "Long",
+            "label": "Long",
+            "argument": "-l ",
+            "showArgument": true
+        }
+      },
+      {
+        "id": "NUMERIC",
+        "value": {
+            "type": "string",
+            "default": "0",
+            "order": 1,
+            "required": false,
+            "validator": "",
+            "visible": true
+        },
+        "details": {
+            "description": "Numeric",
+            "label": "Numeric",
+            "argument": "-n ",
+            "showArgument": true
+        }
+      },
+      {
+        "id": "OTHRESH",
+        "value": {
+            "type": "string",
+            "default": "2",
+            "order": 1,
+            "required": false,
+            "validator": "",
+            "visible": true
+        },
+        "details": {
+            "description": "OTHRESH",
+            "label": "OTHRESH",
+            "argument": "-O ",
+            "showArgument": true
+        }
+      },
+      {
+        "id": "PTHRESH",
+        "value": {
+            "type": "string",
+            "default": "3",
+            "order": 1,
+            "required": false,
+            "validator": "",
+            "visible": true
+        },
+        "details": {
+            "description": "PTHRESH",
+            "label": "PTHRESH",
+            "argument": "-P ",
+            "showArgument": true
+        }
+      },
+      {
+        "id": "PREDS",
+        "value": {
+            "type": "string",
+            "default": "0",
+            "order": 1,
+            "required": false,
+            "validator": "",
+            "visible": true
+        },
+        "details": {
+            "description": "PREDS",
+            "label": "PREDS",
+            "argument": "-p ",
+            "showArgument": true
+        }
+      },
+      {
+        "id": "SHORT",
+        "value": {
+            "type": "string",
+            "default": "0",
+            "order": 1,
+            "required": false,
+            "validator": "",
+            "visible": true
+        },
+        "details": {
+            "description": "SHORT",
+            "label": "SHORT",
+            "argument": "-s ",
+            "showArgument": true
+        }
       }
     }
   ],

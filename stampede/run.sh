@@ -123,8 +123,7 @@ done
 INPUT_FILES=$(mktemp)
 if [[ -n "$IN_DIR" ]]; then
     if [[ -d "$IN_DIR" ]]; then
-        #find "$IN_DIR" -type f > "$INPUT_FILES"
-        find "$IN_DIR" -type f \( -name \*.fa -o -name \*.fna -o -name \*.fasta \) > "$INPUT_FILES"
+        find "$IN_DIR" -type f > "$INPUT_FILES"
     else
         echo "IN_DIR \"$IN_DIR\" is not a directory"
         exit 1
@@ -188,15 +187,10 @@ while read -r FILE; do
     BASENAME=$(basename "$FILE")
     let i++
     printf "%6d: %s\n" $i "$BASENAME"
-    #OUT_FILE=$(echo "$FILE" | perl -pe "s{$IN_DIR}{$OUT_DIR}")
-    #BASEDIR=$(dirname "$OUT_FILE")
-    #[[ ! -d "$BASEDIR" ]] && mkdir -p "$BASEDIR"
-    FILE_DIR=$(dirname "$FILE")
 
     while read -r DB_DIR; do
         DB_TYPE=$(basename "$DB_DIR") # e.g., kegg or pfam28
-        #OUT_FILE="$OUT_DIR/$DB_TYPE-$BASENAME"
-        OUT_FILE="$FILE_DIR/$BASENAME.uproc.$DB_TYPE"
+        OUT_FILE="$OUT_DIR/$BASENAME.uproc.$DB_TYPE"
 
         echo "singularity exec $IMG $PROG -o $OUT_FILE $OPTS $DB_DIR $UPROC_MODEL_DIR $FILE" >> "$PARAM"
     done < "$UPROC_DB_DIRS"
