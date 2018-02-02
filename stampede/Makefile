@@ -8,7 +8,7 @@ up:
 	copy_from_manifest.py
 
 template:
-	jobs-template $(APP) > job.json
+	jobs-template -A $(APP) > job.json
 
 job:
 	jobs-submit -F job.json

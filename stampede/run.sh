@@ -7,6 +7,9 @@
 #SBATCH -t 24:00:00
 #SBATCH -A iPlant-Collabs
 
+module load tacc-singularity
+module load launcher
+
 set -u
 
 IN_DIR=""
@@ -25,8 +28,8 @@ PREDS=0
 STATS=0
 COUNTS=0
 
-export LAUNCHER_DIR="$HOME/src/launcher"
-export LAUNCHER_PLUGIN_DIR="$LAUNCHER_DIR/plugins"
+PARAMRUN="$TACC_LAUNCHER_DIR/paramrun"
+export LAUNCHER_PLUGIN_DIR="$TACC_LAUNCHER_DIR/plugins"
 export LAUNCHER_WORKDIR="$PWD"
 export LAUNCHER_RMI="SLURM"
 export LAUNCHER_SCHED="interleaved"
@@ -199,14 +202,18 @@ done < "$INPUT_FILES"
 NJOBS=$(lc "$PARAM")
 
 if [[ $NJOBS -lt 1 ]]; then
-    echo 'No launcher jobs to run!'
+    echo "No launcher jobs to run!"
 else
     export LAUNCHER_JOB_FILE="$PARAM"
-    [[ $NJOBS -ge 16 ]] && export LAUNCHER_PPN=16
+    if [[ $NJOBS -lt 16 ]]; then
+        export LAUNCHER_PPN=$NJOBS
+    else 
+        unset LAUNCHER_PPN
+    fi
     echo "Starting NJOBS \"$NJOBS\" $(date)"
-    "$LAUNCHER_DIR/paramrun"
+    $PARAMRUN
     echo "Ended LAUNCHER $(date)"
 fi
 
-echo "Done."
+echo "Done, see OUT_DIR \"$OUT_DIR\""
 echo "Comments to kyclark@email.arizona.edu"

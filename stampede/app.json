@@ -4,15 +4,15 @@
  "defaultProcessorsPerNode":16,
  "defaultMaxRunTime":"12:00:00",
  "defaultNodeCount":1,
- "defaultQueue":"serial",
+ "defaultQueue":"normal",
  "deploymentPath":"kyclark/applications/uproc-1.2.0/stampede",
  "deploymentSystem":"data.iplantcollaborative.org",
- "executionSystem":"tacc-stampede-kyclark",
+ "executionSystem":"tacc-stampede2-kyclark",
  "executionType":"HPC",
  "helpURI":"",
  "label": "UProC",
  "longDescription":"protein sequence classification",
- "modules":["singularity"],
+ "modules":["tacc-singularity","launcher"],
  "name":"uproc",
  "ontology":["http://sswapmeet.sswap.info/agave/apps/Application"],
  "parallelism":"SERIAL",
@@ -26,7 +26,7 @@
      "value":
         {"default":"",
          "order":0,
-         "required":false,
+         "required":true,
          "validator":"",
          "visible":true},
      "semantics":
@@ -43,7 +43,7 @@
     }
   ],
   "parameters": [
-     {
+    {
       "id": "SEQ_TYPE",
       "value": {
           "type": "enumeration",
@@ -62,142 +62,150 @@
           "label": "Sequence type",
           "argument": "-t ",
           "showArgument": true
+      }
+    },
+    {
+      "id": "COUNTS",
+      "value": {
+          "type": "string",
+          "default": "0",
+          "order": 2,
+          "required": false,
+          "validator": "",
+          "visible": true
       },
-      {
-        "id": "COUNTS",
-        "value": {
-            "type": "string",
-            "default": "0",
-            "order": 1,
-            "required": false,
-            "validator": "",
-            "visible": true
-        },
-        "details": {
-            "description": "Counts",
-            "label": "Counts",
-            "argument": "-c ",
-            "showArgument": true
-        }
+      "details": {
+          "description": "Print 'FAMILY,COUNT' where COUNT is the number of classifications for FAMILY",
+          "label": "Counts",
+          "argument": "-c ",
+          "showArgument": true
+      }
+    },
+    {
+      "id": "STATS",
+      "value": {
+          "type": "string",
+          "default": "0",
+          "order": 3,
+          "required": false,
+          "validator": "",
+          "visible": true
       },
-      {
-        "id": "STATS",
-        "value": {
-            "type": "string",
-            "default": "0",
-            "order": 1,
-            "required": false,
-            "validator": "",
-            "visible": true
-        },
-        "details": {
-            "description": "Stats",
-            "label": "Stats",
-            "argument": "-f ",
-            "showArgument": true
-        }
+      "details": {
+          "description": "Print 'CLASSIFIED,UNCLASSIFIED,TOTAL' sequence counts",
+          "label": "Stats",
+          "argument": "-f ",
+          "showArgument": true
+      }
+    },
+    {
+      "id": "LONG",
+      "value": {
+          "type": "string",
+          "default": "0",
+          "order": 4,
+          "required": false,
+          "validator": "",
+          "visible": true
       },
-      {
-        "id": "LONG",
-        "value": {
-            "type": "string",
-            "default": "0",
-            "order": 1,
-            "required": false,
-            "validator": "",
-            "visible": true
-        },
-        "details": {
-            "description": "Long",
-            "label": "Long",
-            "argument": "-l ",
-            "showArgument": true
-        }
+      "details": {
+          "description": "Use long read mode (default): Only accept certain ORFs (see -O below) and report all protein scores above the threshold (see PROTEIN THRESHOLD above)",
+          "label": "Long",
+          "argument": "-l ",
+          "showArgument": true
+      }
+    },
+    {
+      "id": "NUMERIC",
+      "value": {
+          "type": "string",
+          "default": "0",
+          "order": 5,
+          "required": false,
+          "validator": "",
+          "visible": true
       },
-      {
-        "id": "NUMERIC",
-        "value": {
-            "type": "string",
-            "default": "0",
-            "order": 1,
-            "required": false,
-            "validator": "",
-            "visible": true
-        },
-        "details": {
-            "description": "Numeric",
-            "label": "Numeric",
-            "argument": "-n ",
-            "showArgument": true
-        }
+      "details": {
+          "description": "If used with PREDS or COUNTS, print the internal numeric representation of the protein families instead of their names.",
+          "label": "Numeric",
+          "argument": "-n ",
+          "showArgument": true
+      }
+    },
+    {
+      "id": "OTHRESH",
+      "value": {
+          "type": "enumeration",
+          "default": "2",
+          "order": 6,
+          "required": false,
+          "enumValues": [
+            { "0": "Accept all ORFs" },
+            { "1" : "Less restrictive" },
+            { "2": "More restrictive" }
+          ],
+          "visible": true
       },
-      {
-        "id": "OTHRESH",
-        "value": {
-            "type": "string",
-            "default": "2",
-            "order": 1,
-            "required": false,
-            "validator": "",
-            "visible": true
-        },
-        "details": {
-            "description": "OTHRESH",
-            "label": "OTHRESH",
-            "argument": "-O ",
-            "showArgument": true
-        }
+      "details": {
+          "description": "ORF translation threshold level",
+          "label": "ORF translation threshold level",
+          "argument": "-O ",
+          "showArgument": true
+      }
+    },
+    {
+      "id": "PTHRESH",
+      "value": {
+          "type": "enumeration",
+          "default": "3",
+          "order": 7,
+          "required": false,
+          "enumValues": [
+            { "0": "Fixed threshold of 0.0" },
+            { "2" : "Less restrictive" },
+            { "3": "More restrictive" }
+          ],
+          "visible": true
       },
-      {
-        "id": "PTHRESH",
-        "value": {
-            "type": "string",
-            "default": "3",
-            "order": 1,
-            "required": false,
-            "validator": "",
-            "visible": true
-        },
-        "details": {
-            "description": "PTHRESH",
-            "label": "PTHRESH",
-            "argument": "-P ",
-            "showArgument": true
-        }
+      "details": {
+          "description": "Protein threshold level",
+          "label": "Protein threshold level",
+          "argument": "-P ",
+          "showArgument": true
+      }
+    },
+    {
+      "id": "PREDS",
+      "value": {
+          "type": "string",
+          "default": "0",
+          "order": 8,
+          "required": false,
+          "validator": "",
+          "visible": true
       },
-      {
-        "id": "PREDS",
-        "value": {
-            "type": "string",
-            "default": "0",
-            "order": 1,
-            "required": false,
-            "validator": "",
-            "visible": true
-        },
-        "details": {
-            "description": "PREDS",
-            "label": "PREDS",
-            "argument": "-p ",
-            "showArgument": true
-        }
+      "details": {
+          "description": "Print all classifications as CSV with the fields specified by FORMAT",
+          "label": "Print classifications",
+          "argument": "-p ",
+          "showArgument": true
+      }
+    },
+    {
+      "id": "SHORT",
+      "value": {
+          "type": "string",
+          "default": "0",
+          "order": 9,
+          "required": false,
+          "validator": "",
+          "visible": true
       },
-      {
-        "id": "SHORT",
-        "value": {
-            "type": "string",
-            "default": "0",
-            "order": 1,
-            "required": false,
-            "validator": "",
-            "visible": true
-        },
-        "details": {
-            "description": "SHORT",
-            "label": "SHORT",
-            "argument": "-s ",
-            "showArgument": true
-        }
+      "details": {
+          "description": "Use short read mode: Accept all ORFs, report only maximum protein score (if above threshold)",
+          "label": "Short",
+          "argument": "-s ",
+          "showArgument": true
       }
     }
   ],

@@ -1,0 +1,47 @@
+{
+  "name":"uproc test-1516654909",
+  "appId": "uproc-1.2.0",
+  "batchQueue": "normal",
+  "executionSystem": "tacc-stampede2-kyclark",
+  "maxRunTime": "12:00:00",
+  "memoryPerNode": "32GB",
+  "nodeCount": 1,
+  "processorsPerNode": 16,
+  "archive": true,
+  "archiveSystem": "data.iplantcollaborative.org",
+  "archivePath": null,
+  "inputs": {
+    "QUERY": [ 
+      "/kyclark/data/dolphin/fasta/Dolphin_1_z04.fa",
+      "/kyclark/data/dolphin/fasta/Dolphin_2_z09.fa"
+    ]
+  },
+  "parameters": {
+    "SEQ_TYPE": "dna",
+    "COUNTS": "0",
+    "STATS": "0",
+    "LONG": "0",
+    "NUMERIC": "0",
+    "OTHRESH": "2",
+    "PTHRESH": "3",
+    "PREDS": "0",
+    "SHORT": "0"
+  },
+  "notifications": [
+    {
+      "url":"https://requestbin.agaveapi.co/w0xnwdw1?job_id=${JOB_ID}&status=${JOB_STATUS}",
+      "event":"*",
+      "persistent":true
+    },
+    {
+      "url":"kyclark@gmail.com",
+      "event":"FINISHED",
+          "persistent":false
+    },
+    {
+      "url":"kyclark@gmail.com",
+      "event":"FAILED",
+      "persistent":false
+    }
+  ]
+}
