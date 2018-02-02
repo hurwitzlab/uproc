@@ -27,3 +27,6 @@ test: clean
 
 imicrobe:
 	sbatch -N 4 -n 4 run.sh -i $(WORK)/iplantc.org/data/imicrobe/projects -o $(WORK)/iplantc.org/data/imicrobe/uproc
+
+myriam:
+	sbatch -J myriam ./run.sh -q $(WORK)/myriam/lake_a/corrected -o $(WORK)/myriam/lake_a/uproc-corrected
