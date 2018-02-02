@@ -9,6 +9,8 @@ import sys
 # --------------------------------------------------
 def get_args():
     """get args"""
+    bin = os.path.dirname(sys.argv[0])
+
     parser = argparse.ArgumentParser(description='Argparse Python script')
     parser.add_argument('-k', '--kegghits', help='KEGG hits',
                         metavar='FILE', type=str, default='')
@@ -18,11 +20,11 @@ def get_args():
 
     parser.add_argument('-e', '--keggdb', help='KEGG annotations',
                         metavar='FILE', type=str,
-                        default='kegg_annotation.tab')
+                        default=os.path.join(bin, 'kegg_annotation.tab'))
 
     parser.add_argument('-f', '--pfamdb', help='PFAM annotation',
                         metavar='FILE', type=str,
-                        default='pfam_annotation.tab')
+                        default=os.path.join(bin, 'pfam_annotation.tab'))
 
     parser.add_argument('-o', '--out_dir', help='Output directory',
                         metavar='DIR', type=str, default='')

@@ -9,7 +9,7 @@ From: ubuntu:latest
 
 %post
     apt-get update
-    apt-get install -y locales git build-essential wget zlib1g-dev 
+    apt-get install -y locales git build-essential wget zlib1g-dev python3
     locale-gen en_US.UTF-8
 
     #
@@ -18,6 +18,9 @@ From: ubuntu:latest
     export APP_DIR=/app
     mkdir -p $APP_DIR
     cd $APP_DIR
+
+    git clone https://github.com/hurwitzlab/uproc.git
+
     BIN_DIR=/app/uproc/bin
     mkdir -p "$BIN_DIR"
 
