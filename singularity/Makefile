@@ -1,7 +1,7 @@
 SINGULARITY = /usr/local/bin/singularity
 IMG_NAME = uproc-1.2.0.img
 DEF_NAME = image.def
-SIZE = 1024
+SIZE = 718
 
 run:
 	sudo $(SINGULARITY) run $(IMG_NAME)
