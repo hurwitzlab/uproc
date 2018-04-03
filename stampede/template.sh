@@ -9,5 +9,6 @@ echo "NUMERIC  \"${NUMERIC}\""
 echo "OTHRESH  \"${OTHRESH}\""
 echo "PTHRESH  \"${PTHRESH}\""
 echo "SHORT    \"${SHORT}\""
+echo "PREDS    \"${PREDS}\""
 
-sh run.sh ${QUERY} ${SEQ_TYPE} ${COUNTS} ${STATS} ${LONG} ${NUMERIC} ${OTHRESH} ${PTHRESH} ${SHORT}
+sh run.sh ${QUERY} ${SEQ_TYPE} ${COUNTS} ${STATS} ${LONG} ${NUMERIC} ${OTHRESH} ${PTHRESH} ${SHORT} ${PREDS}
