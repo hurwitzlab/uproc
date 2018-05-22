@@ -14,9 +14,10 @@ set -u
 
 IN_DIR=""
 QUERY=""
+INPUT_LIST=""
 OUT_DIR="$PWD/uproc-out"
+OUT_DIR_IS_IN_DIR=0
 SEQ_TYPE="dna"
-IMG="uproc-1.2.0.img"
 UPROC_DB_DIR_BASE="/work/05066/imicrobe/iplantc.org/data/uproc/db"
 UPROC_MODEL_DIR="/work/05066/imicrobe/iplantc.org/data/uproc/model"
 PTHRESH=3
@@ -27,6 +28,8 @@ NUMERIC=0
 PREDS=0
 STATS=0
 COUNTS=0
+IMG="/work/05066/imicrobe/singularity/uproc-1.2.0.img"
+SINGULARITY_EXEC="singularity exec $IMG"
 
 PARAMRUN="$TACC_LAUNCHER_DIR/paramrun"
 export LAUNCHER_PLUGIN_DIR="$TACC_LAUNCHER_DIR/plugins"
@@ -48,9 +51,12 @@ function HELP() {
     echo ""
     echo " -q QUERY (dirs/files)"
     echo ""
+    echo " -L QUERY (file containing dirs/files)"
+    echo ""
     echo "Optional arguments:"
     echo " -c COUNTS ($COUNTS)"
     echo " -d UPROC_DB_DIR_BASE ($UPROC_DB_DIR_BASE)"
+    echo " -D OUT_DIR_IS_IN_DIR ($OUT_DIR_IS_IN_DIR)"
     echo " -f STATS ($STATS)"
     echo " -l LONG ($LONG)"
     echo " -m UPROC_MODEL_DIR ($UPROC_MODEL_DIR)"
@@ -66,13 +72,16 @@ function HELP() {
 
 [[ $# -eq 0 ]] && HELP
 
-while getopts :d:i:m:o:O:P:q:t:cfhlnps OPT; do
+while getopts :d:i:L:m:o:O:P:q:t:cDfhlnps OPT; do
     case $OPT in
       c)
           COUNTS="1"
           ;;
       d)
           UPROC_DB_DIR_BASE="$OPTARG"
+          ;;
+      D)
+          OUT_DIR_IS_IN_DIR=1
           ;;
       f)
           STATS="1"
@@ -85,6 +94,9 @@ while getopts :d:i:m:o:O:P:q:t:cfhlnps OPT; do
           ;;
       l)
           LONG="1"
+          ;;
+      L)
+          INPUT_LIST="$OPTARG"
           ;;
       m)
           UPROC_MODEL_DIR="$OPTARG"
@@ -123,6 +135,11 @@ while getopts :d:i:m:o:O:P:q:t:cfhlnps OPT; do
     esac
 done
 
+if [[ ! -f "$IMG" ]]; then
+    echo "Cannot find Singularity image \"$IMG\""
+    exit 1
+fi
+
 INPUT_FILES=$(mktemp)
 if [[ -n "$IN_DIR" ]]; then
     if [[ -d "$IN_DIR" ]]; then
@@ -131,6 +148,16 @@ if [[ -n "$IN_DIR" ]]; then
         echo "IN_DIR \"$IN_DIR\" is not a directory"
         exit 1
     fi
+elif [[ -n "$INPUT_LIST" ]] && [[ -f "$INPUT_LIST" ]]; then
+    while read -r QRY; do
+        if [[ -f "$QRY" ]]; then
+            echo "$QRY" >> "$INPUT_FILES"
+        elif [[ -d "$QRY" ]]; then
+            find "$QRY" -type f -size +0c >> "$INPUT_FILES"
+        else
+            echo "\"$QRY\" is neither file nor directory"
+        fi
+    done < "$INPUT_LIST"
 elif [[ -n "$QUERY" ]]; then
     for QRY in $QUERY; do
         if [[ -f "$QRY" ]]; then
@@ -166,12 +193,12 @@ else
 fi
 
 OPTS="-P $PTHRESH -O $OTHRESH"
-[[ $LONG -gt 0 ]]    && OPTS="$OPTS --long"
-[[ $SHORT -gt 0 ]]   && OPTS="$OPTS --short"
+[[ $LONG    -gt 0 ]] && OPTS="$OPTS --long"
+[[ $SHORT   -gt 0 ]] && OPTS="$OPTS --short"
 [[ $NUMERIC -gt 0 ]] && OPTS="$OPTS --numeric"
-[[ $STATS -gt 0 ]]   && OPTS="$OPTS --stats"
-[[ $PREDS -gt 0 ]]   && OPTS="$OPTS --preds"
-[[ $COUNTS -gt 0 ]]  && OPTS="$OPTS --counts"
+[[ $STATS   -gt 0 ]] && OPTS="$OPTS --stats"
+[[ $PREDS   -gt 0 ]] && OPTS="$OPTS --preds"
+[[ $COUNTS  -gt 0 ]] && OPTS="$OPTS --counts"
 
 PARAM="$$.param"
 cat /dev/null > "$PARAM"
@@ -186,6 +213,7 @@ if [[ $NUM_UPROC_DBS -lt 1 ]]; then
 fi
 
 i=0
+OUT_FILES=$(mktemp)
 while read -r FILE; do
     BASENAME=$(basename "$FILE")
     let i++
@@ -193,9 +221,22 @@ while read -r FILE; do
 
     while read -r DB_DIR; do
         DB_TYPE=$(basename "$DB_DIR") # e.g., kegg or pfam28
-        OUT_FILE="$OUT_DIR/$BASENAME.uproc.$DB_TYPE"
+        USE_DIR=""
+        if [[ $OUT_DIR_IS_IN_DIR -gt 0 ]]; then
+            USE_DIR=$(dirname "$FILE")
+        else
+            USE_DIR=$OUT_DIR
+        fi
 
-        echo "singularity exec $IMG $PROG -o $OUT_FILE $OPTS $DB_DIR $UPROC_MODEL_DIR $FILE" >> "$PARAM"
+        OUT_FILE="$USE_DIR/$BASENAME.uproc.$DB_TYPE"
+
+        echo "$OUT_FILE" >> "$OUT_FILES"
+
+        if [[ -s "$OUT_FILE" ]]; then
+            echo "\"$OUT_FILE\" already exists, skipping"
+        else
+            echo "$SINGULARITY_EXEC $PROG -o $OUT_FILE $OPTS $DB_DIR $UPROC_MODEL_DIR $FILE" >> "$PARAM"
+        fi
     done < "$UPROC_DB_DIRS"
 done < "$INPUT_FILES"
 
@@ -215,5 +256,43 @@ else
     echo "Ended LAUNCHER $(date)"
 fi
 
-echo "Done, see OUT_DIR \"$OUT_DIR\""
-echo "Comments to kyclark@email.arizona.edu"
+NUM_OUT=$(lc "$OUT_FILES")
+
+if [[ $NUM_OUT -lt 1 ]]; then
+    echo "Warning: Found no output files to annotate!"
+else
+    ANNOT="$SINGULARITY_EXEC annotate_uproc_hits.py"
+    ANNOT_PARAM="$$.annot.param"
+    cat /dev/null > "$ANNOT_PARM"
+
+    while read -r OUT_FILE; do
+        BASENAME=$(basename "$OUT_FILE")
+        EXT=${BASENAME##*.}
+
+        if [[ $EXT == "pfam28" ]]; then
+            echo "$ANNOT -p $OUT_FILE" >> "$ANNOT_PARAM"
+        elif [[ $EXT == "kegg" ]]; then
+            echo "$ANNOT -k $OUT_FILE" >> "$ANNOT_PARAM"
+        else
+            echo "Unknown \"$BASENAME\""
+        fi
+    done < "$OUT_FILES"
+
+    NJOBS=$(lc "$ANNOT_PARAM")
+
+    if [[ $NJOBS -lt 1 ]]; then
+        echo "No annotation jobs to run!"
+    else
+        export LAUNCHER_JOB_FILE="$ANNOT_PARAM"
+        if [[ $NJOBS -lt 16 ]]; then
+            export LAUNCHER_PPN=$NJOBS
+        else 
+            unset LAUNCHER_PPN
+        fi
+        echo "Starting NJOBS \"$NJOBS\" $(date)"
+        $PARAMRUN
+        echo "Ended LAUNCHER $(date)"
+    fi
+fi
+
+echo "Done. Comments to kyclark@email.arizona.edu"

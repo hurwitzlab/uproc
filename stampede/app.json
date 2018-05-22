@@ -67,8 +67,8 @@
     {
       "id": "COUNTS",
       "value": {
-          "type": "string",
-          "default": "0",
+          "type": "flag",
+          "default": false,
           "order": 2,
           "required": false,
           "validator": "",
@@ -84,8 +84,8 @@
     {
       "id": "STATS",
       "value": {
-          "type": "string",
-          "default": "0",
+          "type": "flag",
+          "default": false,
           "order": 3,
           "required": false,
           "validator": "",
@@ -101,8 +101,8 @@
     {
       "id": "LONG",
       "value": {
-          "type": "string",
-          "default": "0",
+          "type": "flag",
+          "default": false,
           "order": 4,
           "required": false,
           "validator": "",
@@ -118,8 +118,8 @@
     {
       "id": "NUMERIC",
       "value": {
-          "type": "string",
-          "default": "0",
+          "type": "flag",
+          "default": false,
           "order": 5,
           "required": false,
           "validator": "",
@@ -177,8 +177,8 @@
     {
       "id": "PREDS",
       "value": {
-          "type": "string",
-          "default": "0",
+          "type": "flag",
+          "default": false,
           "order": 8,
           "required": false,
           "validator": "",
@@ -194,8 +194,8 @@
     {
       "id": "SHORT",
       "value": {
-          "type": "string",
-          "default": "0",
+          "type": "flag",
+          "default": false,
           "order": 9,
           "required": false,
           "validator": "",
