@@ -11,7 +11,10 @@ def get_args():
     """get args"""
     bin = os.path.dirname(sys.argv[0])
 
-    parser = argparse.ArgumentParser(description='Argparse Python script')
+    parser = argparse.ArgumentParser(
+        description='Argparse Python script',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter))
+
     parser.add_argument('-k', '--kegghits', help='KEGG hits',
                         metavar='FILE', type=str, default='')
 
