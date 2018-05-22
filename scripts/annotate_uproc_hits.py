@@ -13,7 +13,7 @@ def get_args():
 
     parser = argparse.ArgumentParser(
         description='Argparse Python script',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter))
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('-k', '--kegghits', help='KEGG hits',
                         metavar='FILE', type=str, default='')
