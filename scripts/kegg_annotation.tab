@@ -15736,3 +15736,18 @@ K17823	DCUN1D3	DCN1-like protein 3
 K17824	DCUN1D4_5	DCN1-like protein 4/5		
 K17825	FTMF	verruculogen synthase [EC:1.14.11.38]	ko00404  Staurosporine biosynthesis	M00786  Fumitremorgin alkaloid biosynthesis, tryptophan + proline => fumitremorgin C/A
 K17827	FTME, CYP5066A	fumitremorgin C synthase [EC:1.14.21.10]	ko00404  Staurosporine biosynthesis	M00786  Fumitremorgin alkaloid biosynthesis, tryptophan + proline => fumitremorgin C/A
+K01618	E4.1.1.107	3,4-dihydroxyphenylacetaldehyde synthase [EC:4.1.1.107]	ko00350  Tyrosine metabolism	
+K01726	GAMMACA	gamma-carbonic anhydrase [EC:4.2.1.-]		
+K05682	ABCG3, Mxr2, Abcp2	ATP-binding cassette, subfamily G (WHITE), member 3	ko02010  ABC transporters	
+K08415	GPR62	G protein-coupled receptor 62		
+K09546	HSPB7	heat shock protein beta-7		
+K10653	TRIM54, MURF3	tripartite motif-containing protein 54		
+K11868	CYP71A13	indoleacetaldoxime dehydratase [EC:4.99.1.6]	ko00380  Tryptophan metabolism	
+K12030	TRIM62	tripartite motif-containing protein 62 [EC:2.3.2.27]		
+K12128	PRR9	pseudo-response regulator 9	ko04712  Circadian rhythm - plant	
+K12134	CCA1	circadian clock associated 1	ko04712  Circadian rhythm - plant	
+K12155	CYP79F2	homomethionine N-monooxygenase [EC:1.14.14.42]	ko00966  Glucosinolate biosynthesis /            ko01210  2-Oxocarboxylic acid metabolism	
+K12159	ISG15	ubiquitin cross-reactive protein	ko04622  RIG-I-like receptor signaling pathway /            ko05165  Human papillomavirus infection	
+K13673	SCG	phosphoglycan beta-1,3-galactosyltransferase [EC:2.4.1.-]		
+K15699	RNF122	RING finger protein 122		
+K16239	bsdC	4-hydroxybenzoate decarboxylase subunit C [EC:4.1.1.61]	ko00627  Aminobenzoate degradation /            ko01120  Microbial metabolism in diverse environments	
