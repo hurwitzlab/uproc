@@ -1,0 +1,7 @@
+[package]
+name = "run_uproc"
+version = "0.1.0"
+authors = ["aponsero"]
+
+[dependencies]
+clap ="~2.32"
