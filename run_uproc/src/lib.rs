@@ -2,8 +2,9 @@ extern crate clap;
 
 use clap::{App, Arg};
 use std::error::Error;
+use std::process::{Command, Stdio};
 use std::{
-    env, fs::{self, DirBuilder}, path::{Path, PathBuf},
+    env, fs::{self, DirBuilder}, io::Write, path::{Path, PathBuf},
 };
 
 #[derive(Debug)]
@@ -268,7 +269,7 @@ fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<PathBuf> {
         "--short".to_string()
     });
 
-    let uproc_dbs = find_dirs(&config.uproc_db_dir);
+    let uproc_dbs = find_dirs(&config.uproc_db_dir)?;
 
     println!("uproc_dbs = {:?}", uproc_dbs);
 
@@ -276,32 +277,78 @@ fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<PathBuf> {
     for file in files.iter() {
         println!("file = {:?}", file);
         for db_dir in uproc_dbs.iter() {
-            println!("db = {:?}", &db_dir);
-            //println!("dbsplit = {:?}", &db_dir.split("/"));
+            let db_name = &db_dir.split("/").last().unwrap();
 
-            //let Some(db_name) = match db_dir.split("/").last() {
-            //    Some(x) => x,
-            //    _ => {
-            //        let msg = format!("Can't split {}", db_dir);
-            //        return Err(From::from(msg));
-            //    }
-            //};
+            if let Some(basename) = Path::new(file).file_name() {
+                let out_file = uproc_dir.join(format!(
+                    "{}.{}",
+                    basename.to_string_lossy(),
+                    db_name
+                ));
 
-            //if let Some(basename) = Path::new(file).file_name() {
-            //    let out_file =
-            //        uproc_dir.join(format!("{}.{}", basename, db_name));
-
-            //    if !Path::new(&out_file).exists() {
-            //        jobs.push(format!(
-            //            "hulk sketch {} -o {} -f {}",
-            //            args.join(" "),
-            //            out_file.display(),
-            //            file,
-            //        ));
-            //    }
-            //}
+                if !Path::new(&out_file).exists() {
+                    jobs.push(format!(
+                        "uproc-dna {} -o {} {} {} {}",
+                        args.join(" "),
+                        out_file.display(),
+                        &db_dir,
+                        &config.uproc_model_dir.to_string_lossy(),
+                        file,
+                    ));
+                }
+            }
         }
     }
 
+    if jobs.len() > 0 {
+        run_jobs(&jobs, "Running uproc-dna", 8)?;
+    } else {
+        println!("No jobs to run, skipping this step");
+    }
+
     Ok(uproc_dir)
+}
+
+// --------------------------------------------------
+fn run_jobs(
+    jobs: &Vec<String>,
+    msg: &str,
+    num_concurrent: u32,
+) -> MyResult<()> {
+    let num_jobs = jobs.len();
+
+    //println!("jobs = {:?}", jobs);
+
+    if num_jobs > 0 {
+        println!(
+            "{} (# {} job{} @ {})",
+            msg,
+            num_jobs,
+            if num_jobs == 1 { "" } else { "s" },
+            num_concurrent
+        );
+
+        let mut process = Command::new("parallel")
+            .arg("-j")
+            .arg(num_concurrent.to_string())
+            .arg("--halt")
+            .arg("soon,fail=1")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::null())
+            .spawn()?;
+
+        {
+            let stdin = process.stdin.as_mut().expect("Failed to open stdin");
+            stdin
+                .write_all(jobs.join("\n").as_bytes())
+                .expect("Failed to write to stdin");
+        }
+
+        let result = process.wait()?;
+        if !result.success() {
+            return Err(From::from("Failed to run jobs in parallel"));
+        }
+    }
+
+    Ok(())
 }
