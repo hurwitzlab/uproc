@@ -5,7 +5,7 @@ From: ubuntu:latest
     PATH=/app/uproc/scripts:/app/uproc/bin:$PATH
 
 %runscript
-    exec /app/local/bin/run_uproc "$@"
+    exec /usr/local/bin/run_uproc "$@"
 
 %post
     apt-get update
