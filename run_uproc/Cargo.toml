@@ -1,7 +1,7 @@
 [package]
 name = "run_uproc"
 version = "0.1.0"
-authors = ["aponsero"]
+authors = ["Alise Ponsero, Ken Youens-Clark"]
 
 [dependencies]
 clap ="~2.32"

@@ -22,6 +22,7 @@ pub struct Config {
     read_length: ReadLength,
     uproc_db_dir: PathBuf,
     uproc_model_dir: PathBuf,
+    annotation_dir: PathBuf,
     out_dir: PathBuf,
 }
 
@@ -49,24 +50,6 @@ pub fn get_args() -> MyResult<Config> {
                 .help("File input or directory")
                 .required(true)
                 .min_values(1),
-        )
-        .arg(
-            Arg::with_name("preds")
-                .short("p")
-                .long("preds")
-                .help("Print all classifications"),
-        )
-        .arg(
-            Arg::with_name("stats")
-                .short("f")
-                .long("stats")
-                .help("Print 'CLASSIFIED,UNCLASSIFIED,TOTAL' sequence counts"),
-        )
-        .arg(
-            Arg::with_name("counts")
-                .short("c")
-                .long("counts")
-                .help("Print 'FAMILY,COUNT'"),
         )
         .arg(
             Arg::with_name("read_length")
@@ -113,6 +96,13 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("DIR")
                 .help("Output directory"),
         )
+        .arg(
+            Arg::with_name("annotation_dir")
+                .short("a")
+                .long("annotation_dir")
+                .value_name("DIR")
+                .help("Directory with annotation files"),
+        )
         .get_matches();
 
     let othresh = matches
@@ -142,6 +132,13 @@ pub fn get_args() -> MyResult<Config> {
         }
     };
 
+    let annotation_dir = match matches.value_of("annotation_dir") {
+        Some(x) => PathBuf::from(x),
+        _ => {
+            return Err(From::from("Must have --annotation_dir"));
+        }
+    };
+
     let out_dir = match matches.value_of("out_dir") {
         Some(x) => PathBuf::from(x),
         _ => {
@@ -157,6 +154,7 @@ pub fn get_args() -> MyResult<Config> {
         read_length: read_length,
         uproc_db_dir: uproc_db_dir,
         uproc_model_dir: uproc_model_dir,
+        annotation_dir: annotation_dir,
         out_dir: out_dir,
     })
 }
@@ -183,7 +181,7 @@ pub fn run(config: Config) -> MyResult<()> {
 
     run_uproc_dna(&config, &files)?;
     let split_files = split_uproc_output(&config)?;
-    annotate_uproc(&split_files)?;
+    annotate_uproc(&config, &split_files)?;
 
     println!("Done, see output in \"{:?}\"", &config.out_dir);
 
@@ -383,14 +381,14 @@ fn split_uproc_output(config: &Config) -> MyResult<Vec<String>> {
 }
 
 // --------------------------------------------------
-fn annotate_uproc(files: &Vec<String>) -> MyResult<()> {
+fn annotate_uproc(config: &Config, files: &Vec<String>) -> MyResult<()> {
     let kegg_db = read_annotation_file(
-        "/home/u20/kyclark/work/uproc/scripts/kegg_annotation.tab".to_string(),
+        &config.annotation_dir.join("kegg_annotation.tab"),
         "kegg_annotation_id",
     )?;
 
     let pfam_db = read_annotation_file(
-        "/home/u20/kyclark/work/uproc/scripts/pfam_annotation.tab".to_string(),
+        &config.annotation_dir.join("pfam_annotation.tab"),
         "accession",
     )?;
 
@@ -463,7 +461,7 @@ fn annotate_uproc(files: &Vec<String>) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn read_annotation_file(file: String, key: &str) -> MyResult<RecordLookup> {
+fn read_annotation_file(file: &PathBuf, key: &str) -> MyResult<RecordLookup> {
     let f = File::open(&file)?;
     let mut rdr = csv::ReaderBuilder::new().delimiter(b'\t').from_reader(f);
 
