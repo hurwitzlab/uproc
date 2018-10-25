@@ -5,27 +5,33 @@ From: ubuntu:latest
     PATH=/app/uproc/scripts:/app/uproc/bin:$PATH
 
 %runscript
-    exec /app/uproc/bin/uproc-dna "$@"
+    exec /app/local/bin/run_uproc "$@"
 
 %post
     apt-get update
-    apt-get install -y locales git build-essential wget zlib1g-dev python3
+    apt-get install -y locales git curl build-essential wget zlib1g-dev parallel
     locale-gen en_US.UTF-8
 
-    #
-    # Put everything into $APP_DIR
-    #
-    export APP_DIR=/app
-    mkdir -p $APP_DIR
-    cd $APP_DIR
+    mkdir ~/.parallel
+    touch ~/.parallel/will-cite
+
+    curl https://sh.rustup.rs -sSf | sh -s -- -y
+    . $HOME/.cargo/env
+
+    mkdir -p /app
+    cd /app
 
     git clone https://github.com/hurwitzlab/uproc.git
+
+    cd /app/uproc/run_uproc
+    cargo build --release
+    mv target/release/run_uproc /usr/local/bin
 
     BIN_DIR=/app/uproc/bin
     mkdir -p "$BIN_DIR"
 
     #
-    # Mash binary
+    # UProc binary
     #
     mkdir /app/src/
     cd /app/src

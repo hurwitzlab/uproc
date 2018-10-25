@@ -1,20 +1,17 @@
 SINGULARITY = /usr/local/bin/singularity
-IMG_NAME = uproc-1.2.0.img
-DEF_NAME = image.def
-SIZE = 718
+IMG = uproc-1.2.0.img
+DEF = image.def
 
 run:
-	sudo $(SINGULARITY) run $(IMG_NAME)
+	sudo $(SINGULARITY) run $(IMG)
 
 clean:
-	rm -f $(IMG_NAME)
+	rm -f $(IMG)
 
 img: clean
-	sudo $(SINGULARITY) create --size $(SIZE) $(IMG_NAME)
-	sudo $(SINGULARITY) bootstrap $(IMG_NAME) $(DEF_NAME)
+	#sudo $(SINGULARITY) create --size $(SIZE) $(IMG)
+	#sudo $(SINGULARITY) bootstrap $(IMG_NAME) $(DEF)
+	sudo $(SINGULARITY) build $(IMG) $(DEF)
 
 shell:
-	sudo $(SINGULARITY) shell --writable -B $(shell pwd):/tmp $(IMG_NAME)
-
-scp:
-	scp $(IMG_NAME) stampede:/work/03137/kyclark/uproc-0.0.1/stampede
+	sudo $(SINGULARITY) shell --writable -B $(shell pwd):/tmp $(IMG)
