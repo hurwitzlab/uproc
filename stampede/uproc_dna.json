@@ -1,0 +1,110 @@
+{"available":true,
+ "checkpointable":false,
+ "defaultMemoryPerNode":32,
+ "defaultProcessorsPerNode":16,
+ "defaultMaxRunTime":"12:00:00",
+ "defaultNodeCount":1,
+ "defaultQueue":"normal",
+ "deploymentPath":"kyclark/applications/uproc-1.2.0/stampede",
+ "deploymentSystem":"data.iplantcollaborative.org",
+ "executionSystem":"tacc-stampede2-kyclark",
+ "executionType":"HPC",
+ "helpURI":"http://uproc.gobics.de/",
+ "label": "UProC DNA",
+ "longDescription":"Protein sequence classification",
+ "modules":["load tacc-singularity"],
+ "name":"uproc_dna",
+ "ontology":["http://sswapmeet.sswap.info/agave/apps/Application"],
+ "parallelism":"SERIAL",
+ "shortDescription":"Protein sequence classification",
+ "tags":["protein"],
+ "templatePath":"template.sh",
+ "testPath":"test.sh",
+ "version":"1.2.0",
+ "inputs":[
+    {"id":"QUERY",
+     "value":
+        {"default":"",
+         "order":0,
+         "required":true,
+         "validator":"",
+         "visible":true},
+     "semantics":
+        {"ontology":["http://sswapmeet.sswap.info/mime/application/X-bam"],
+         "minCardinality":1,
+         "maxCardinality":-1,
+         "fileTypes":["raw-0"]},
+     "details":
+        {"description":"",
+         "label":"Input directories/files",
+         "argument":"-q ",
+         "repeatArgument":true,
+         "showArgument":true}
+    }
+  ],
+  "parameters": [
+    {
+      "id": "READ_LENGTH",
+      "value": {
+          "type": "enumeration",
+          "default": "long",
+          "order": 1,
+          "required": true,
+          "enumValues": [
+            { "long": "Long" },
+            { "short" : "Short" }
+          ],
+          "visible": true
+      },
+      "details": {
+          "description": "",
+          "label": "Read length",
+          "argument": "-r ",
+          "showArgument": true
+      }
+    },
+    {
+      "id": "OTHRESH",
+      "value": {
+          "type": "enumeration",
+          "default": "2",
+          "order": 2,
+          "required": false,
+          "enumValues": [
+            { "0": "Accept all ORFs" },
+            { "1" : "Less restrictive" },
+            { "2": "More restrictive" }
+          ],
+          "visible": true
+      },
+      "details": {
+          "description": "ORF translation threshold level",
+          "label": "ORF translation threshold level",
+          "argument": "-O ",
+          "showArgument": true
+      }
+    },
+    {
+      "id": "PTHRESH",
+      "value": {
+          "type": "enumeration",
+          "default": "3",
+          "order": 3,
+          "required": false,
+          "enumValues": [
+            { "0": "Fixed threshold of 0.0" },
+            { "2" : "Less restrictive" },
+            { "3": "More restrictive" }
+          ],
+          "visible": true
+      },
+      "details": {
+          "description": "Protein threshold level",
+          "label": "Protein threshold level",
+          "argument": "-P ",
+          "showArgument": true
+      }
+    }
+  ],
+  "outputs":[]
+}
