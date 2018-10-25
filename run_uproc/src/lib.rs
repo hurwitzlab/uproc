@@ -1,18 +1,22 @@
 extern crate clap;
+extern crate csv;
+extern crate regex;
+extern crate walkdir;
 
 use clap::{App, Arg};
+use regex::Regex;
+use std::collections::HashMap;
 use std::error::Error;
+use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::{
-    env, fs::{self, DirBuilder}, io::Write, path::{Path, PathBuf},
+    env, fs::{self, DirBuilder, File}, io::Write, path::{Path, PathBuf},
 };
+use walkdir::WalkDir;
 
 #[derive(Debug)]
 pub struct Config {
     query: Vec<String>,
-    counts: bool,
-    stats: bool,
-    preds: bool,
     othresh: Option<u32>,
     pthresh: Option<u32>,
     read_length: ReadLength,
@@ -28,6 +32,8 @@ enum ReadLength {
 }
 
 type MyResult<T> = Result<T, Box<Error>>;
+type Record = HashMap<String, String>;
+type RecordLookup = HashMap<String, Record>;
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
@@ -144,12 +150,8 @@ pub fn get_args() -> MyResult<Config> {
         }
     };
 
-    //Err(From::from("foo"))
     Ok(Config {
         query: matches.values_of_lossy("query").unwrap(),
-        counts: matches.is_present("counts"),
-        stats: matches.is_present("stats"),
-        preds: matches.is_present("preds"),
         othresh: othresh,
         pthresh: pthresh,
         read_length: read_length,
@@ -179,9 +181,11 @@ pub fn run(config: Config) -> MyResult<()> {
         DirBuilder::new().recursive(true).create(&out_dir)?;
     }
 
-    let uproc_dir = run_uproc_dna(&config, &files)?;
+    run_uproc_dna(&config, &files)?;
+    let split_files = split_uproc_output(&config)?;
+    annotate_uproc(&split_files)?;
 
-    println!("Done, see output in \"{:?}\"", uproc_dir);
+    println!("Done, see output in \"{:?}\"", &config.out_dir);
 
     Ok(())
 }
@@ -235,25 +239,12 @@ fn find_dirs(base_dir: &PathBuf) -> Result<Vec<String>, Box<Error>> {
 }
 
 // --------------------------------------------------
-fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<PathBuf> {
-    let uproc_dir = config.out_dir.join(PathBuf::from("uproc"));
-    if !uproc_dir.is_dir() {
-        DirBuilder::new().recursive(true).create(&uproc_dir)?;
-    }
-
-    let mut args: Vec<String> = vec![];
-
-    if config.counts {
-        args.push("--counts".to_string());
-    }
-
-    if config.stats {
-        args.push("--stats".to_string());
-    }
-
-    if config.preds {
-        args.push("--preds".to_string());
-    }
+fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<()> {
+    let mut args: Vec<String> = vec![
+        "--counts".to_string(),
+        "--preds".to_string(),
+        "--stats".to_string(),
+    ];
 
     if let Some(othresh) = config.othresh {
         args.push(format!("--othresh {}", othresh));
@@ -271,16 +262,13 @@ fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<PathBuf> {
 
     let uproc_dbs = find_dirs(&config.uproc_db_dir)?;
 
-    println!("uproc_dbs = {:?}", uproc_dbs);
-
     let mut jobs: Vec<String> = vec![];
     for file in files.iter() {
-        println!("file = {:?}", file);
         for db_dir in uproc_dbs.iter() {
             let db_name = &db_dir.split("/").last().unwrap();
 
             if let Some(basename) = Path::new(file).file_name() {
-                let out_file = uproc_dir.join(format!(
+                let out_file = &config.out_dir.join(format!(
                     "{}.{}",
                     basename.to_string_lossy(),
                     db_name
@@ -306,7 +294,7 @@ fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<PathBuf> {
         println!("No jobs to run, skipping this step");
     }
 
-    Ok(uproc_dir)
+    Ok(())
 }
 
 // --------------------------------------------------
@@ -316,8 +304,6 @@ fn run_jobs(
     num_concurrent: u32,
 ) -> MyResult<()> {
     let num_jobs = jobs.len();
-
-    //println!("jobs = {:?}", jobs);
 
     if num_jobs > 0 {
         println!(
@@ -351,4 +337,143 @@ fn run_jobs(
     }
 
     Ok(())
+}
+
+// --------------------------------------------------
+fn split_uproc_output(config: &Config) -> MyResult<Vec<String>> {
+    let re = Regex::new(r"\.(kegg|pfam\d+)$").unwrap();
+    let files: Vec<String> = WalkDir::new(&config.out_dir)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+        .map(|e| e.path().display().to_string())
+        .filter(|name| re.is_match(name))
+        .collect();
+
+    let mut results = vec![];
+    for file in files {
+        let f = File::open(&file)?;
+        let f = BufReader::new(f);
+
+        let stats_out = format!("{}.stats", file);
+        let preds_out = format!("{}.preds", file);
+        let counts_out = format!("{}.counts", file);
+
+        let mut stats_fh = File::create(&stats_out)?;
+        let mut preds_fh = File::create(&preds_out)?;
+        let mut counts_fh = File::create(&counts_out)?;
+
+        for line in f.lines() {
+            let line = line?;
+            let flds: Vec<&str> = line.split(",").collect();
+            if flds.len() == 2 {
+                write!(&counts_fh, "{}\n", &line)?;
+            } else if flds.len() == 3 {
+                write!(&stats_fh, "{}\n", &line)?;
+            } else {
+                write!(&preds_fh, "{}\n", &line)?;
+            }
+        }
+
+        results.push(counts_out);
+        fs::remove_file(file)?;
+    }
+
+    Ok(results)
+}
+
+// --------------------------------------------------
+fn annotate_uproc(files: &Vec<String>) -> MyResult<()> {
+    let kegg_db = read_annotation_file(
+        "/home/u20/kyclark/work/uproc/scripts/kegg_annotation.tab".to_string(),
+        "kegg_annotation_id",
+    )?;
+
+    let pfam_db = read_annotation_file(
+        "/home/u20/kyclark/work/uproc/scripts/pfam_annotation.tab".to_string(),
+        "accession",
+    )?;
+
+    let pfam_re = Regex::new(r"\.pfam28\.counts$").unwrap();
+    let kegg_re = Regex::new(r"\.kegg\.counts$").unwrap();
+    let pfam_hdrs = vec!["pfam_id", "count", "identifier", "name"];
+    let kegg_hdrs = vec![
+        "kegg_id",
+        "count",
+        "name",
+        "definition",
+        "pathway",
+        "module",
+    ];
+
+    for file in files {
+        let f = File::open(&file)?;
+        let f = BufReader::new(f);
+
+        let file_type = if pfam_re.is_match(file) {
+            "pfam"
+        } else if kegg_re.is_match(file) {
+            "kegg"
+        } else {
+            let msg = format!("Unexpected file: {}", file);
+            return Err(From::from(msg));
+        };
+
+        let out = format!("{}.annotated", file);
+        let mut fh = File::create(&out)?;
+        let (hdrs, db) = if file_type == "pfam" {
+            (&pfam_hdrs, &pfam_db)
+        } else {
+            (&kegg_hdrs, &kegg_db)
+        };
+
+        write!(&fh, "{}\n", hdrs.join("\t"))?;
+
+        for line in f.lines() {
+            let line = line?;
+            let vals: Vec<&str> = line.split(",").collect();
+            if vals.len() == 2 {
+                let id = vals[0];
+                let count = vals[1];
+                if let Some(rec) = db.get(id) {
+                    let annots = if file_type == "kegg" {
+                        vec![
+                            id,
+                            count,
+                            rec.get("name").unwrap(),
+                            rec.get("definition").unwrap(),
+                            rec.get("pathway").unwrap(),
+                            rec.get("module").unwrap(),
+                        ]
+                    } else {
+                        vec![
+                            id,
+                            count,
+                            rec.get("identifier").unwrap(),
+                            rec.get("name").unwrap(),
+                        ]
+                    };
+                    write!(&fh, "{}\n", annots.join("\t"))?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+// --------------------------------------------------
+fn read_annotation_file(file: String, key: &str) -> MyResult<RecordLookup> {
+    let f = File::open(&file)?;
+    let mut rdr = csv::ReaderBuilder::new().delimiter(b'\t').from_reader(f);
+
+    let mut lookup: RecordLookup = HashMap::new();
+    for result in rdr.deserialize() {
+        let record: Record = result?;
+        if let Some(id) = &record.get(key) {
+            lookup.insert(id.to_string(), record.clone());
+        }
+    }
+
+    Ok(lookup)
 }

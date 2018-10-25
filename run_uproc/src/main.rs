@@ -10,7 +10,6 @@ fn main() {
         }
     };
 
-    println!("{:?}", config);
     if let Err(e) = run_uproc::run(config) {
         println!("Error: {}", e);
         process::exit(1);

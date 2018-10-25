@@ -1,14 +1,5 @@
-preds:
-	cargo run -- --preds -q /data/kyclark/dolphin/fasta/ -d /data/kyclark/uproc/db -m /data/kyclark/uproc/model
-
-stats:
-	cargo run -- --stats -q /data/kyclark/dolphin/fasta/ -d /data/kyclark/uproc/db -m /data/kyclark/uproc/model
-
-counts:
-	cargo run -- --counts -q /data/kyclark/dolphin/fasta/ -d /data/kyclark/uproc/db -m /data/kyclark/uproc/model
-
 dolphin:
-	cargo run -- -q /data/kyclark/dolphin/fasta/ -d /data/kyclark/uproc/db -m /data/kyclark/uproc/model
+	cargo run -- -q /data/kyclark/dolphin/test/ -d /data/kyclark/uproc/db -m /data/kyclark/uproc/model
 
 empty:
 	cargo run -- -q /data/kyclark/dolphin/empty/ -d /data/kyclark/uproc/db -m /data/kyclark/uproc/model
