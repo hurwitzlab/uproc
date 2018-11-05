@@ -9,6 +9,8 @@
 
 module load tacc-singularity
 
+set -u
+
 IMG="/work/05066/imicrobe/singularity/uproc-1.2.0-1.img"
 
 if [[ ! -e "$IMG" ]]; then
@@ -16,6 +18,8 @@ if [[ ! -e "$IMG" ]]; then
     exit 1
 fi
 
-singularity exec $IMG run_uproc "$@"
+UPROC_DATA="/work/05066/imicrobe/iplantc.org/data/uproc/"
+
+singularity exec $IMG run_uproc "$@" -o "uproc-dna-out" -a "$UPROC_DATA/annotations" -d "$UPROC_DATA/db" -m "$UPROC_DATA/model"
 
 echo "Comments to kyclark@email.arizona.edu"

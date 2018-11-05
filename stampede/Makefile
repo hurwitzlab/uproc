@@ -20,7 +20,7 @@ scriptsgz:
 	(cd scripts && tar cvf ../scripts.tgz *)
 
 app:
-	apps-addupdate -F app.json
+	apps-addupdate -F uproc_dna.json
 
 test: clean
 	sbatch test.sh
