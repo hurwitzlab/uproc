@@ -1,49 +1,15 @@
 BootStrap: docker
-From: ubuntu:latest
-
-%environment
-    PATH=/app/uproc/scripts:/app/uproc/bin:$PATH
+From: hurwitzlab/uproc:1.2.0
 
 %runscript
     exec /usr/local/bin/run_uproc "$@"
 
 %post
     apt-get update
-    apt-get install -y locales git curl build-essential wget zlib1g-dev parallel
+    apt-get install -y locales 
     locale-gen en_US.UTF-8
 
-    mkdir ~/.parallel
-    touch ~/.parallel/will-cite
-
-    curl https://sh.rustup.rs -sSf | sh -s -- -y
-    . $HOME/.cargo/env
-
-    mkdir -p /app
-    cd /app
-
-    git clone https://github.com/hurwitzlab/uproc.git
-
-    cd /app/uproc/run_uproc
-    cargo build --release
-    mv target/release/run_uproc /usr/local/bin
-
-    BIN_DIR=/app/uproc/bin
-    mkdir -p "$BIN_DIR"
-
-    #
-    # UProc binary
-    #
-    mkdir /app/src/
-    cd /app/src
-    wget -O uproc.tgz http://uproc.gobics.de/downloads/uproc/uproc-1.2.0.tar.gz
-    tar xvf uproc.tgz
-    cd uproc-1.2.0
-    ./configure --prefix /app/uproc # --disable-mmap 
-    make install
-
-    #
     # Mount points for TACC directories
-    #
     mkdir /home1
     mkdir /scratch
     mkdir /work

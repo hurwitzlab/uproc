@@ -32,7 +32,7 @@ enum ReadLength {
     ShortReads,
 }
 
-type MyResult<T> = Result<T, Box<Error>>;
+type MyResult<T> = Result<T, Box<dyn Error>>;
 type Record = HashMap<String, String>;
 type RecordLookup = HashMap<String, Record>;
 
@@ -189,7 +189,7 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn find_files(paths: &Vec<String>) -> Result<Vec<String>, Box<Error>> {
+fn find_files(paths: &Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
     let mut files = vec![];
     for path in paths {
         let meta = fs::metadata(path)?;
@@ -214,7 +214,7 @@ fn find_files(paths: &Vec<String>) -> Result<Vec<String>, Box<Error>> {
 }
 
 // --------------------------------------------------
-fn find_dirs(base_dir: &PathBuf) -> Result<Vec<String>, Box<Error>> {
+fn find_dirs(base_dir: &PathBuf) -> Result<Vec<String>, Box<dyn Error>> {
     if !base_dir.is_dir() {
         let msg = format!("base_dir \"{:?}\" is not a directory", base_dir);
         return Err(From::from(msg));
@@ -357,9 +357,9 @@ fn split_uproc_output(config: &Config) -> MyResult<Vec<String>> {
         let preds_out = format!("{}.preds", file);
         let counts_out = format!("{}.counts", file);
 
-        let mut stats_fh = File::create(&stats_out)?;
-        let mut preds_fh = File::create(&preds_out)?;
-        let mut counts_fh = File::create(&counts_out)?;
+        let stats_fh = File::create(&stats_out)?;
+        let preds_fh = File::create(&preds_out)?;
+        let counts_fh = File::create(&counts_out)?;
 
         for line in f.lines() {
             let line = line?;
@@ -418,7 +418,7 @@ fn annotate_uproc(config: &Config, files: &Vec<String>) -> MyResult<()> {
         };
 
         let out = format!("{}.annotated", file);
-        let mut fh = File::create(&out)?;
+        let fh = File::create(&out)?;
         let (hdrs, db) = if file_type == "pfam" {
             (&pfam_hdrs, &pfam_db)
         } else {
