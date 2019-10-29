@@ -1,6 +1,15 @@
 #!/usr/bin/env cwl-runner
 
-cwlVersion: v1.0
+doc: "CWL to run UProc batch tool"
+id: "RunUProc"
+label: "UProc DNA batch tool"
+
+dct:creator:
+  "@id": "https://orcid.org/0000-0001-9961-144X"
+  foaf:name: Ken Youens-Clark
+  foaf:mbox: "mailto:kyclark@email.arizona.edu"
+
+cwlVersion: v1.1
 class: CommandLineTool
 hints:
   DockerRequirement:
@@ -56,3 +65,7 @@ outputs:
     type: Directory
     outputBinding:
       glob: $(inputs.out_dir)
+
+$namespaces:
+    dct: http://purl.org/dc/terms/
+    foaf: http://xmlns.com/foaf/0.1/
