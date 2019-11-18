@@ -10,7 +10,10 @@ use std::error::Error;
 use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use std::{
-    env, fs::{self, DirBuilder, File}, io::Write, path::{Path, PathBuf},
+    env,
+    fs::{self, DirBuilder, File},
+    io::Write,
+    path::{Path, PathBuf},
 };
 use walkdir::WalkDir;
 
@@ -24,6 +27,8 @@ pub struct Config {
     uproc_model_dir: PathBuf,
     annotation_dir: PathBuf,
     out_dir: PathBuf,
+    num_concurrent_jobs: Option<u32>,
+    num_halt: Option<u32>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -103,6 +108,22 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("DIR")
                 .help("Directory with annotation files"),
         )
+        .arg(
+            Arg::with_name("num_concurrent_jobs")
+                .short("n")
+                .long("num_concurrent_jobs")
+                .value_name("INT")
+                .default_value("8")
+                .help("Number of concurrent jobs for parallel"),
+        )
+        .arg(
+            Arg::with_name("num_halt")
+                .short("H")
+                .long("num_halt")
+                .value_name("INT")
+                .default_value("0")
+                .help("Halt after this many failing jobs"),
+        )
         .get_matches();
 
     let othresh = matches
@@ -111,6 +132,14 @@ pub fn get_args() -> MyResult<Config> {
 
     let pthresh = matches
         .value_of("pthresh")
+        .and_then(|x| x.trim().parse::<u32>().ok());
+
+    let num_concurrent_jobs = matches
+        .value_of("num_concurrent_jobs")
+        .and_then(|x| x.trim().parse::<u32>().ok());
+
+    let num_halt = matches
+        .value_of("num_halt")
         .and_then(|x| x.trim().parse::<u32>().ok());
 
     let read_length = match matches.value_of("read_length") {
@@ -149,13 +178,15 @@ pub fn get_args() -> MyResult<Config> {
 
     Ok(Config {
         query: matches.values_of_lossy("query").unwrap(),
-        othresh: othresh,
-        pthresh: pthresh,
-        read_length: read_length,
-        uproc_db_dir: uproc_db_dir,
-        uproc_model_dir: uproc_model_dir,
-        annotation_dir: annotation_dir,
-        out_dir: out_dir,
+        othresh,
+        pthresh,
+        read_length,
+        uproc_db_dir,
+        uproc_model_dir,
+        annotation_dir,
+        out_dir,
+        num_concurrent_jobs,
+        num_halt,
     })
 }
 
@@ -163,7 +194,7 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     let files = find_files(&config.query)?;
 
-    if files.len() == 0 {
+    if files.is_empty() {
         let msg = format!("No input files from query \"{:?}\"", &config.query);
         return Err(From::from(msg));
     }
@@ -189,7 +220,7 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn find_files(paths: &Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
+fn find_files(paths: &[String]) -> Result<Vec<String>, Box<dyn Error>> {
     let mut files = vec![];
     for path in paths {
         let meta = fs::metadata(path)?;
@@ -206,7 +237,7 @@ fn find_files(paths: &Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
         };
     }
 
-    if files.len() == 0 {
+    if files.is_empty() {
         return Err(From::from("No input files"));
     }
 
@@ -229,7 +260,7 @@ fn find_dirs(base_dir: &PathBuf) -> Result<Vec<String>, Box<dyn Error>> {
         }
     }
 
-    if dirs.len() == 0 {
+    if dirs.is_empty() {
         return Err(From::from(format!("No directories in {:?}", base_dir)));
     }
 
@@ -237,7 +268,7 @@ fn find_dirs(base_dir: &PathBuf) -> Result<Vec<String>, Box<dyn Error>> {
 }
 
 // --------------------------------------------------
-fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<()> {
+fn run_uproc_dna(config: &Config, files: &[String]) -> MyResult<()> {
     let mut args: Vec<String> = vec![
         "--counts".to_string(),
         "--preds".to_string(),
@@ -263,7 +294,7 @@ fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<()> {
     let mut jobs: Vec<String> = vec![];
     for file in files.iter() {
         for db_dir in uproc_dbs.iter() {
-            let db_name = &db_dir.split("/").last().unwrap();
+            let db_name = &db_dir.split('/').last().unwrap();
 
             if let Some(basename) = Path::new(file).file_name() {
                 let out_file = &config.out_dir.join(format!(
@@ -286,8 +317,13 @@ fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<()> {
         }
     }
 
-    if jobs.len() > 0 {
-        run_jobs(&jobs, "Running uproc-dna", 8)?;
+    if !jobs.is_empty() {
+        run_jobs(
+            &jobs,
+            "Running uproc-dna",
+            config.num_concurrent_jobs.unwrap_or(8),
+            config.num_halt.unwrap_or(1),
+        )?;
     } else {
         println!("No jobs to run, skipping this step");
     }
@@ -297,9 +333,10 @@ fn run_uproc_dna(config: &Config, files: &Vec<String>) -> MyResult<()> {
 
 // --------------------------------------------------
 fn run_jobs(
-    jobs: &Vec<String>,
+    jobs: &[String],
     msg: &str,
-    num_concurrent: u32,
+    num_concurrent_jobs: u32,
+    num_halt: u32,
 ) -> MyResult<()> {
     let num_jobs = jobs.len();
 
@@ -309,14 +346,14 @@ fn run_jobs(
             msg,
             num_jobs,
             if num_jobs == 1 { "" } else { "s" },
-            num_concurrent
+            num_concurrent_jobs,
         );
 
         let mut process = Command::new("parallel")
             .arg("-j")
-            .arg(num_concurrent.to_string())
+            .arg(num_concurrent_jobs.to_string())
             .arg("--halt")
-            .arg("soon,fail=1")
+            .arg(format!("soon,fail={}", num_halt.to_string()))
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
             .spawn()?;
@@ -363,13 +400,13 @@ fn split_uproc_output(config: &Config) -> MyResult<Vec<String>> {
 
         for line in f.lines() {
             let line = line?;
-            let flds: Vec<&str> = line.split(",").collect();
+            let flds: Vec<&str> = line.split(',').collect();
             if flds.len() == 2 {
-                write!(&counts_fh, "{}\n", &line)?;
+                writeln!(&counts_fh, "{}", &line)?;
             } else if flds.len() == 3 {
-                write!(&stats_fh, "{}\n", &line)?;
+                writeln!(&stats_fh, "{}", &line)?;
             } else {
-                write!(&preds_fh, "{}\n", &line)?;
+                writeln!(&preds_fh, "{}", &line)?;
             }
         }
 
@@ -381,7 +418,7 @@ fn split_uproc_output(config: &Config) -> MyResult<Vec<String>> {
 }
 
 // --------------------------------------------------
-fn annotate_uproc(config: &Config, files: &Vec<String>) -> MyResult<()> {
+fn annotate_uproc(config: &Config, files: &[String]) -> MyResult<()> {
     let kegg_db = read_annotation_file(
         &config.annotation_dir.join("kegg_annotation.tab"),
         "kegg_annotation_id",
@@ -392,8 +429,6 @@ fn annotate_uproc(config: &Config, files: &Vec<String>) -> MyResult<()> {
         "accession",
     )?;
 
-    let pfam_re = Regex::new(r"\.pfam28\.counts$").unwrap();
-    let kegg_re = Regex::new(r"\.kegg\.counts$").unwrap();
     let pfam_hdrs = vec!["pfam_id", "count", "identifier", "name"];
     let kegg_hdrs = vec![
         "kegg_id",
@@ -408,9 +443,9 @@ fn annotate_uproc(config: &Config, files: &Vec<String>) -> MyResult<()> {
         let f = File::open(&file)?;
         let f = BufReader::new(f);
 
-        let file_type = if pfam_re.is_match(file) {
+        let file_type = if file.ends_with(".pfam28.counts") {
             "pfam"
-        } else if kegg_re.is_match(file) {
+        } else if file.ends_with(".kegg.counts") {
             "kegg"
         } else {
             let msg = format!("Unexpected file: {}", file);
@@ -425,11 +460,11 @@ fn annotate_uproc(config: &Config, files: &Vec<String>) -> MyResult<()> {
             (&kegg_hdrs, &kegg_db)
         };
 
-        write!(&fh, "{}\n", hdrs.join("\t"))?;
+        writeln!(&fh, "{}", hdrs.join("\t"))?;
 
         for line in f.lines() {
             let line = line?;
-            let vals: Vec<&str> = line.split(",").collect();
+            let vals: Vec<&str> = line.split(',').collect();
             if vals.len() == 2 {
                 let id = vals[0];
                 let count = vals[1];
@@ -451,7 +486,7 @@ fn annotate_uproc(config: &Config, files: &Vec<String>) -> MyResult<()> {
                             rec.get("name").unwrap(),
                         ]
                     };
-                    write!(&fh, "{}\n", annots.join("\t"))?;
+                    writeln!(&fh, "{}", annots.join("\t"))?;
                 }
             }
         }

@@ -19,7 +19,7 @@ baseCommand: run_uproc
 
 inputs:
   query:
-    type: File
+    type: File[]
     inputBinding:
       position: 1
       prefix: --query
