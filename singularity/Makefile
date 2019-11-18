@@ -22,4 +22,5 @@ dolphin:
 	-o /work/kyclark/uproc/dolphin-out \
 	--uproc_db_dir /work/kyclark/uproc/db \
 	--uproc_model_dir /work/kyclark/uproc/model/ \
-	--annotation_dir /work/kyclark/uproc/annotations
+	--annotation_dir /work/kyclark/uproc/annotations \
+	-H 1 -n 8

@@ -1,4 +1,4 @@
-FROM rust:1.38.0-buster as rust
+FROM rust:1.39.0-stretch as rust
 RUN git clone https://github.com/hurwitzlab/uproc.git
 RUN cd uproc/run_uproc && cargo build --release && cp target/release/run_uproc /usr/local/bin
 

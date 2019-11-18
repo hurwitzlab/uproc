@@ -45,8 +45,8 @@ type RecordLookup = HashMap<String, Record>;
 pub fn get_args() -> MyResult<Config> {
     let matches = App::new("run_uproc")
         .version("0.1.0")
-        .author("alise ponsero")
-        .about("runs uproc")
+        .author("Alise Ponsero, Ken Youens-Clark")
+        .about("Runs UProc")
         .arg(
             Arg::with_name("query")
                 .short("q")
