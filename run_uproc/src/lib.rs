@@ -121,7 +121,7 @@ pub fn get_args() -> MyResult<Config> {
                 .short("H")
                 .long("num_halt")
                 .value_name("INT")
-                .default_value("0")
+                .default_value("1")
                 .help("Halt after this many failing jobs"),
         )
         .get_matches();
@@ -349,11 +349,16 @@ fn run_jobs(
             num_concurrent_jobs,
         );
 
+        let mut args: Vec<String> =
+            vec!["-j".to_string(), num_concurrent_jobs.to_string()];
+
+        if num_halt > 0 {
+            args.push("--halt".to_string());
+            args.push(format!("soon,fail={}", num_halt.to_string()));
+        }
+
         let mut process = Command::new("parallel")
-            .arg("-j")
-            .arg(num_concurrent_jobs.to_string())
-            .arg("--halt")
-            .arg(format!("soon,fail={}", num_halt.to_string()))
+            .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::null())
             .spawn()?;
