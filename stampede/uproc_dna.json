@@ -38,7 +38,7 @@
         {"description":"",
          "label":"Input directories/files",
          "argument":"-q ",
-         "repeatArgument":true,
+         "repeatArgument":false,
          "showArgument":true}
     }
   ],

@@ -1,5 +1,5 @@
 {
-  "name":"uproc test-1516654909",
+  "name":"uproc test-1541451719",
   "appId": "uproc-1.2.0",
   "batchQueue": "normal",
   "executionSystem": "tacc-stampede2-kyclark",
@@ -12,24 +12,24 @@
   "archivePath": null,
   "inputs": {
     "QUERY": [ 
-      "/kyclark/data/dolphin/fasta/Dolphin_1_z04.fa",
-      "/kyclark/data/dolphin/fasta/Dolphin_2_z09.fa"
+      "kyclark/data/pov/small/POV_L.Sum.O.1000m_reads.fa",
+      "kyclark/data/pov/small/POV_L.Win.O.10m_reads.fa"
     ]
   },
   "parameters": {
     "SEQ_TYPE": "dna",
-    "COUNTS": "0",
-    "STATS": "0",
-    "LONG": "0",
-    "NUMERIC": "0",
+    "COUNTS": false,
+    "STATS": false,
+    "LONG": false,
+    "NUMERIC": false,
     "OTHRESH": "2",
     "PTHRESH": "3",
-    "PREDS": "0",
-    "SHORT": "0"
+    "PREDS": false,
+    "SHORT": false
   },
   "notifications": [
     {
-      "url":"https://requestbin.agaveapi.co/w0xnwdw1?job_id=${JOB_ID}&status=${JOB_STATUS}",
+      "url":"https://requestbin.agaveapi.co/x36cw7x3?job_id=${JOB_ID}&status=${JOB_STATUS}",
       "event":"*",
       "persistent":true
     },
